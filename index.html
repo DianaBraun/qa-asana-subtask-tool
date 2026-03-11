@@ -798,6 +798,21 @@
           return;
         }
 
+        // Force Work Type to "BugFix"
+        if (nameLower === 'work type' && f.resource_subtype === 'enum') {
+          const bugfixOption = (f.enum_options || []).find(opt =>
+            opt.name && opt.name.toLowerCase() === 'bugfix'
+          );
+          if (bugfixOption) {
+            inheritedCustomFields[f.gid] = bugfixOption.gid;
+            inheritedFieldsDisplay.push({ name: f.name, value: 'BugFix (forced)' });
+          } else {
+            inheritedFieldsDisplay.push({ name: f.name, value: displayVal || '— (BugFix option not found)' });
+            if (f.enum_value) inheritedCustomFields[f.gid] = f.enum_value.gid;
+          }
+          return;
+        }
+
         // Force Origin to "QA team"
         if (nameLower === 'origin' && f.resource_subtype === 'enum') {
           const qaOption = (f.enum_options || []).find(opt =>

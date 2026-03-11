@@ -586,6 +586,24 @@
 
   loadSavedToken();
 
+  // Track which task URL is currently connected
+  let connectedTaskInput = '';
+
+  // Reset connection when parent task URL changes
+  document.getElementById('parentTaskInput').addEventListener('input', () => {
+    const current = document.getElementById('parentTaskInput').value.trim();
+    if (current !== connectedTaskInput) {
+      // URL changed — reset connection state
+      document.getElementById('connBadge').classList.remove('visible');
+      document.getElementById('createBtn').disabled = true;
+      document.getElementById('inheritedFieldsCard').style.display = 'none';
+      document.getElementById('submitStep').textContent = 'Submit';
+      parentTaskGid = '';
+      inheritedCustomFields = {};
+      inheritedFieldsDisplay = [];
+    }
+  });
+
   // Char counter
   document.getElementById('reproSteps').addEventListener('input', e => {
     document.getElementById('reproCount').textContent = e.target.value.length;
@@ -830,6 +848,7 @@
       document.getElementById('connBadge').classList.add('visible');
       document.getElementById('createBtn').disabled = false;
       document.getElementById('submitStep').textContent = 'Submit → subtask of "' + parentTaskName + '"';
+      connectedTaskInput = document.getElementById('parentTaskInput').value.trim();
 
       log('connLog', '✓ Inheriting ' + inheritedFieldsDisplay.length + ' custom fields', 'ok');
     } catch(e) {
@@ -925,6 +944,7 @@
     if (!repro) return log('resultLog', '✗ Steps to reproduce are required', 'err');
     if (!expected) return log('resultLog', '✗ Expected result is required', 'err');
     if (!actual) return log('resultLog', '✗ Actual result is required', 'err');
+    if (!parentTaskGid) return log('resultLog', '✗ Please connect to a parent task first', 'err');
 
     document.getElementById('resultLog').innerHTML = '';
     document.getElementById('spinner').style.display = 'block';

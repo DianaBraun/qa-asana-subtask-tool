@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QA Bug Report Creator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: #2a2f42;
+    --accent: #f7c948;
+    --accent2: #e85d4a;
+    --text: #e8eaf0;
+    --muted: #5c6382;
+    --success: #4caf7d;
+    --info: #5b9cf5;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(232,93,74,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 10% 80%, rgba(247,201,72,0.05) 0%, transparent 50%);
+  }
+
+  .container { max-width: 740px; margin: 0 auto; }
+
+  header { margin-bottom: 36px; }
+
+  .label-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 { font-size: 32px; font-weight: 600; line-height: 1.1; margin-bottom: 8px; }
+  h1 span { color: var(--accent2); }
+
+  .subtitle { color: var(--muted); font-size: 14px; font-weight: 300; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .card:nth-child(2) { animation-delay: 0.05s; }
+  .card:nth-child(3) { animation-delay: 0.1s; }
+  .card:nth-child(4) { animation-delay: 0.15s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .field-group { margin-bottom: 16px; }
+  .field-group:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  label .req { color: var(--accent2); margin-left: 2px; }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input:focus, textarea:focus, select:focus { border-color: var(--accent2); }
+
+  textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235c6382'%3E%3Cpath d='M6 8.5L1 3.5h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  select option { background: var(--surface2); color: var(--text); }
+
+  .field-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--accent2);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    padding: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-transform: uppercase;
+  }
+
+  .btn-primary:hover { background: #d14e3d; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--accent);
+    padding: 10px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent); background: rgba(247,201,72,0.05); }
+
+  .btn-forget {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 0;
+    transition: color 0.2s;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .btn-forget:hover { color: var(--accent2); }
+
+  .template-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .log {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 16px;
+  }
+
+  .log.visible { display: block; }
+  .log-ok { color: var(--success); }
+  .log-err { color: var(--accent2); }
+  .log-info { color: var(--muted); }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .preview-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .preview-box.visible { display: block; }
+
+  .preview-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .preview-field {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(42,47,66,0.5);
+    font-size: 13px;
+  }
+
+  .preview-field:last-child { border: none; }
+  .preview-field .pf-label { color: var(--muted); }
+  .preview-field .pf-value { color: var(--text); font-weight: 500; }
+
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 8px 0 18px;
+  }
+
+  .connected-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(76,175,125,0.1);
+    border: 1px solid rgba(76,175,125,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--success);
+    margin-top: 8px;
+    display: none;
+  }
+
+  .connected-badge.visible { display: inline-flex; }
+  .connected-badge::before { content: '●'; font-size: 8px; }
+
+  .char-count {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 3px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* File upload zone */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent2);
+    background: rgba(232,93,74,0.04);
+  }
+
+  .dropzone-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+
+  .dropzone-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .dropzone-text strong {
+    color: var(--accent2);
+    cursor: pointer;
+  }
+
+  .dropzone-hint {
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0.6;
+    margin-top: 6px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .file-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .file-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+    overflow: hidden;
+  }
+
+  .file-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .file-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .file-size {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .file-remove {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .file-remove:hover { color: var(--accent2); }
+
+  .upload-progress {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .upload-progress.active { display: block; }
+
+  .upload-progress-bar {
+    height: 100%;
+    background: var(--success);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  @media (max-width: 600px) {
+    .row, .row-3 { grid-template-columns: 1fr; }
+    h1 { font-size: 26px; }
+    .card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="label-tag">QA Tooling</div>
+    <h1>Bug <span>Report</span> Creator</h1>
+    <p class="subtitle">Fill in the form → a bug subtask is created under your main task with all custom fields inherited.</p>
+  </header>
+
+  <!-- AUTH -->
+  <div class="card">
+    <div class="card-title">01 — Connect</div>
+    <div class="row">
+      <div class="field-group">
+        <label>Asana Personal Access Token</label>
+        <input type="password" id="token" placeholder="1/xxxxxxxx…" autocomplete="off"/>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+          <span class="field-hint" id="tokenHint"></span>
+          <button class="btn-forget" id="forgetBtn" onclick="forgetToken()" style="display:none;">Forget token</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Parent Task URL</label>
+        <input type="text" id="parentTaskInput" placeholder="Paste the main Asana task URL"/>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="connect()">Connect & Load Task</button>
+    <div class="connected-badge" id="connBadge">Connected</div>
+    <div id="connLog" class="log"></div>
+  </div>
+
+  <!-- BUG DETAILS -->
+  <div class="card">
+    <div class="card-title">02 — Bug Details</div>
+
+    <div class="field-group">
+      <label>Bug Title <span class="req">*</span></label>
+      <input type="text" id="bugTitle" placeholder="[Platform] Short description of the bug"/>
+      <div class="template-chips">
+        <span class="chip" onclick="prefillTitle('[Web]')">[Web]</span>
+        <span class="chip" onclick="prefillTitle('[iOS]')">[iOS]</span>
+        <span class="chip" onclick="prefillTitle('[Android]')">[Android]</span>
+        <span class="chip" onclick="prefillTitle('[API]')">[API]</span>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="field-group">
+      <label>Steps to Reproduce <span class="req">*</span></label>
+      <textarea id="reproSteps" rows="4" placeholder="1. Go to …&#10;2. Click on …&#10;3. Observe …"></textarea>
+      <div class="char-count"><span id="reproCount">0</span> chars</div>
+    </div>
+
+    <div class="row">
+      <div class="field-group">
+        <label>Expected Result <span class="req">*</span></label>
+        <textarea id="expectedResult" rows="2" placeholder="What should happen"></textarea>
+      </div>
+      <div class="field-group">
+        <label>Actual Result <span class="req">*</span></label>
+        <textarea id="actualResult" rows="2" placeholder="What actually happens"></textarea>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>Additional Info</label>
+      <textarea id="additionalInfo" rows="2" placeholder="Browser, OS, account details, screenshots link…"></textarea>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <div class="field-group">
+      <label>Attachments</label>
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" multiple/>
+        <div class="dropzone-icon">📎</div>
+        <div class="dropzone-text">Drag &amp; drop files here or <strong>browse</strong></div>
+        <div class="dropzone-hint">Screenshots, logs, HAR files — up to 100 MB each</div>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+  </div>
+
+  <!-- INHERITED FIELDS PREVIEW -->
+  <div class="card" id="inheritedFieldsCard" style="display:none;">
+    <div class="card-title">03 — Inherited from Parent Task</div>
+    <div id="inheritedFieldsList"></div>
+    <p class="field-hint" style="margin-top:12px;">These fields will be automatically copied to the bug subtask.</p>
+  </div>
+
+  <!-- PREVIEW & SUBMIT -->
+  <div class="card">
+    <div class="card-title" id="submitStep">Submit</div>
+    <button class="btn-secondary" onclick="showPreview()" style="margin-bottom:12px;">Preview Task</button>
+
+    <div class="preview-box" id="previewBox"></div>
+
+    <button class="btn-primary" id="createBtn" onclick="createBug()" disabled>
+      <div class="spinner" id="spinner"></div>
+      <span id="btnLabel">Create Bug Subtask</span>
+    </button>
+
+    <div id="resultLog" class="log"></div>
+  </div>
+</div>
+
+<script>
+  let apiToken = '';
+  let parentTaskGid = '';
+  let parentProjectGid = '';
+  let inheritedCustomFields = {};  // gid -> value (for API)
+  let inheritedFieldsDisplay = []; // [{name, value}] for display
+  let workspaceGid = '';
+  let parentTaskName = '';
+  let parentAssignee = '';
+  let selectedFiles = [];
+
+  // --- Token persistence ---
+  const STORAGE_KEY = 'qa_bug_creator_token';
+
+  function loadSavedToken() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        document.getElementById('token').value = saved;
+        document.getElementById('tokenHint').textContent = 'Token loaded from browser storage.';
+        document.getElementById('forgetBtn').style.display = 'inline';
+      }
+    } catch(e) { /* localStorage unavailable */ }
+  }
+
+  function saveToken(token) {
+    try {
+      localStorage.setItem(STORAGE_KEY, token);
+      document.getElementById('tokenHint').textContent = 'Token saved to browser storage.';
+      document.getElementById('forgetBtn').style.display = 'inline';
+    } catch(e) { /* localStorage unavailable */ }
+  }
+
+  function forgetToken() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    document.getElementById('token').value = '';
+    document.getElementById('tokenHint').textContent = 'Token removed.';
+    document.getElementById('forgetBtn').style.display = 'none';
+  }
+
+  loadSavedToken();
+
+  // Char counter
+  document.getElementById('reproSteps').addEventListener('input', e => {
+    document.getElementById('reproCount').textContent = e.target.value.length;
+  });
+
+  // --- File upload handling ---
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    addFiles(e.dataTransfer.files);
+  });
+
+  fileInput.addEventListener('change', e => {
+    addFiles(e.target.files);
+    fileInput.value = '';
+  });
+
+  function addFiles(fileListObj) {
+    for (const file of fileListObj) {
+      if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) continue;
+      selectedFiles.push(file);
+    }
+    renderFileList();
+  }
+
+  function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    renderFileList();
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function fileIcon(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    const map = {
+      png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', webp: '🖼️', svg: '🖼️',
+      mp4: '🎬', mov: '🎬', avi: '🎬', webm: '🎬',
+      pdf: '📄', doc: '📝', docx: '📝', txt: '📃',
+      har: '🌐', json: '🔧', xml: '🔧', csv: '📊',
+      zip: '📦', rar: '📦', '7z': '📦',
+      log: '🗒️',
+    };
+    return map[ext] || '📎';
+  }
+
+  function renderFileList() {
+    const container = document.getElementById('fileList');
+    if (selectedFiles.length === 0) { container.innerHTML = ''; return; }
+
+    container.innerHTML = selectedFiles.map((file, i) => {
+      const isImage = file.type.startsWith('image/');
+      const thumbHtml = isImage
+        ? `<div class="file-thumb"><img src="${URL.createObjectURL(file)}" alt=""/></div>`
+        : `<div class="file-thumb">${fileIcon(file.name)}</div>`;
+
+      return `<div class="file-item">
+        ${thumbHtml}
+        <div class="file-info">
+          <div class="file-name" title="${file.name}">${file.name}</div>
+          <div class="file-size">${formatSize(file.size)}</div>
+          <div class="upload-progress" id="prog_${i}"><div class="upload-progress-bar" id="progbar_${i}"></div></div>
+        </div>
+        <button class="file-remove" onclick="removeFile(${i})" title="Remove">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  function prefillTitle(prefix) {
+    const el = document.getElementById('bugTitle');
+    if (!el.value.startsWith('[')) {
+      el.value = prefix + ' ' + el.value;
+    } else {
+      el.value = el.value.replace(/^\[.*?\]\s*/, prefix + ' ');
+    }
+    el.focus();
+  }
+
+  function extractGid(input) {
+    // New URL format: /task/TASK_GID
+    const taskMatch = input.match(/\/task\/(\d+)/);
+    if (taskMatch) return taskMatch[1];
+
+    // Old URL format: /0/PROJECT_GID/TASK_GID
+    const oldMatch = input.match(/\/0\/\d+\/(\d+)/);
+    if (oldMatch) return oldMatch[1];
+
+    // Fallback: last long number in the string
+    const allNums = input.match(/\d{10,}/g);
+    if (allNums) return allNums[allNums.length - 1];
+
+    return input.trim();
+  }
+
+  function log(container, msg, type = 'info') {
+    const el = document.getElementById(container);
+    el.classList.add('visible');
+    const line = document.createElement('div');
+    line.className = 'log-' + type;
+    line.textContent = msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  async function apiGet(path) {
+    const res = await fetch('https://app.asana.com/api/1.0' + path, {
+      headers: { 'Authorization': 'Bearer ' + apiToken, 'Accept': 'application/json' }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.errors?.[0]?.message || res.statusText);
+    }
+    return (await res.json()).data;
+  }
+
+  async function connect() {
+    apiToken = document.getElementById('token').value.trim();
+    const taskInput = document.getElementById('parentTaskInput').value.trim();
+
+    if (!apiToken) return log('connLog', '✗ Token required', 'err');
+    if (!taskInput) return log('connLog', '✗ Parent task URL required', 'err');
+
+    parentTaskGid = extractGid(taskInput);
+    document.getElementById('connLog').innerHTML = '';
+
+    try {
+      log('connLog', '→ Verifying token…', 'info');
+      const me = await apiGet('/users/me');
+      workspaceGid = me.workspaces?.[0]?.gid || '';
+      log('connLog', '✓ Hello, ' + me.name, 'ok');
+      saveToken(apiToken);
+
+      log('connLog', '→ Loading parent task…', 'info');
+      const task = await apiGet('/tasks/' + parentTaskGid + '?opt_fields=name,assignee.name,assignee.gid,projects.gid,projects.name,custom_fields');
+      parentTaskName = task.name;
+      parentAssignee = task.assignee?.gid || '';
+      log('connLog', '✓ Task: ' + task.name, 'ok');
+
+      // Get the project from parent task
+      parentProjectGid = task.projects?.[0]?.gid || '';
+      const projectName = task.projects?.[0]?.name || 'No project';
+      if (parentProjectGid) {
+        log('connLog', '✓ Project: ' + projectName, 'ok');
+      }
+
+      // Extract custom field values from parent task
+      inheritedCustomFields = {};
+      inheritedFieldsDisplay = [];
+
+      (task.custom_fields || []).forEach(f => {
+        const displayVal = f.display_value;
+        if (!displayVal) return;
+
+        // Skip read-only field types that can't be set manually
+        const readOnlyTypes = ['custom_id', 'formula', 'created_by', 'rollup'];
+        if (readOnlyTypes.includes(f.resource_subtype)) {
+          inheritedFieldsDisplay.push({ name: f.name, value: displayVal + ' (auto)' });
+          return;
+        }
+
+        // Store for display
+        inheritedFieldsDisplay.push({ name: f.name, value: displayVal });
+
+        // Store for API — handle different field types
+        if (f.resource_subtype === 'enum' && f.enum_value) {
+          inheritedCustomFields[f.gid] = f.enum_value.gid;
+        } else if (f.resource_subtype === 'multi_enum' && f.multi_enum_values?.length) {
+          inheritedCustomFields[f.gid] = f.multi_enum_values.map(v => v.gid);
+        } else if (f.resource_subtype === 'number' && f.number_value != null) {
+          inheritedCustomFields[f.gid] = f.number_value;
+        } else if (f.resource_subtype === 'text' && f.text_value) {
+          inheritedCustomFields[f.gid] = f.text_value;
+        } else if (f.resource_subtype === 'date' && f.date_value) {
+          inheritedCustomFields[f.gid] = f.date_value;
+        } else if (f.resource_subtype === 'people' && f.people_value?.length) {
+          inheritedCustomFields[f.gid] = f.people_value.map(p => p.gid);
+        }
+      });
+
+      // Render inherited fields preview
+      renderInheritedFields();
+
+      document.getElementById('connBadge').classList.add('visible');
+      document.getElementById('createBtn').disabled = false;
+      document.getElementById('submitStep').textContent = 'Submit → subtask of "' + parentTaskName + '"';
+
+      log('connLog', '✓ Inheriting ' + inheritedFieldsDisplay.length + ' custom fields', 'ok');
+    } catch(e) {
+      log('connLog', '✗ ' + e.message, 'err');
+    }
+  }
+
+  function renderInheritedFields() {
+    const card = document.getElementById('inheritedFieldsCard');
+    const container = document.getElementById('inheritedFieldsList');
+
+    if (inheritedFieldsDisplay.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+    container.innerHTML = inheritedFieldsDisplay.map(f =>
+      `<div class="preview-field">
+        <span class="pf-label">${f.name}</span>
+        <span class="pf-value">${f.value}</span>
+      </div>`
+    ).join('');
+  }
+
+  function buildDescription() {
+    const repro = document.getElementById('reproSteps').value.trim();
+    const expected = document.getElementById('expectedResult').value.trim();
+    const actual = document.getElementById('actualResult').value.trim();
+    const additional = document.getElementById('additionalInfo').value.trim();
+
+    let desc = '**Steps to Reproduce:**\n' + repro + '\n\n';
+    desc += '**Expected Result:**\n' + expected + '\n\n';
+    desc += '**Actual Result:**\n' + actual;
+
+    if (additional) {
+      desc += '\n\n---\n\n**Additional Info:**\n' + additional;
+    }
+
+    return desc;
+  }
+
+  function showPreview() {
+    const box = document.getElementById('previewBox');
+    const title = document.getElementById('bugTitle').value.trim();
+
+    if (!title) { alert('Please enter a bug title.'); return; }
+
+    const fields = [
+      ['Title', title],
+      ['Parent Task', parentTaskName],
+      ['Attachments', selectedFiles.length ? selectedFiles.length + ' file(s)' : 'None'],
+    ];
+
+    // Add inherited custom fields
+    inheritedFieldsDisplay.forEach(f => {
+      fields.push([f.name, f.value]);
+    });
+
+    box.innerHTML = '<div class="preview-title">Task Preview</div>' +
+      fields.map(([l, v]) =>
+        `<div class="preview-field"><span class="pf-label">${l}</span><span class="pf-value">${v}</span></div>`
+      ).join('');
+
+    box.classList.add('visible');
+  }
+
+  async function createBug() {
+    const title = document.getElementById('bugTitle').value.trim();
+    const repro = document.getElementById('reproSteps').value.trim();
+    const expected = document.getElementById('expectedResult').value.trim();
+    const actual = document.getElementById('actualResult').value.trim();
+
+    if (!title) return log('resultLog', '✗ Bug title is required', 'err');
+    if (!repro) return log('resultLog', '✗ Steps to reproduce are required', 'err');
+    if (!expected) return log('resultLog', '✗ Expected result is required', 'err');
+    if (!actual) return log('resultLog', '✗ Actual result is required', 'err');
+
+    document.getElementById('resultLog').innerHTML = '';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('btnLabel').textContent = 'Creating…';
+    document.getElementById('createBtn').disabled = true;
+
+    try {
+      const description = buildDescription();
+
+      const body = {
+        data: {
+          name: title,
+          notes: description,
+          parent: parentTaskGid,
+          custom_fields: inheritedCustomFields
+        }
+      };
+
+      // Add to same project as parent
+      if (parentProjectGid) body.data.projects = [parentProjectGid];
+
+      log('resultLog', '→ Creating subtask under "' + parentTaskName + '"…', 'info');
+
+      const res = await fetch('https://app.asana.com/api/1.0/tasks', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + apiToken,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.errors?.[0]?.message || 'Error');
+
+      const taskUrl = parentProjectGid
+        ? 'https://app.asana.com/0/' + parentProjectGid + '/' + json.data.gid
+        : 'https://app.asana.com/0/0/' + json.data.gid;
+      log('resultLog', '✓ Subtask created: ' + json.data.name, 'ok');
+      log('resultLog', '→ ' + taskUrl, 'info');
+
+      // Upload attachments
+      const taskGid = json.data.gid;
+      if (selectedFiles.length > 0) {
+        log('resultLog', '→ Uploading ' + selectedFiles.length + ' attachment(s)…', 'info');
+
+        // Disable remove buttons during upload
+        document.querySelectorAll('.file-remove').forEach(btn => btn.disabled = true);
+
+        let uploaded = 0, failed = 0;
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const progEl = document.getElementById('prog_' + i);
+          const progBar = document.getElementById('progbar_' + i);
+
+          if (progEl) progEl.classList.add('active');
+
+          try {
+            const formData = new FormData();
+            formData.append('file', file, file.name);
+
+            // Use XMLHttpRequest for progress tracking
+            await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.open('POST', 'https://app.asana.com/api/1.0/tasks/' + taskGid + '/attachments');
+              xhr.setRequestHeader('Authorization', 'Bearer ' + apiToken);
+
+              xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && progBar) {
+                  progBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+                }
+              };
+
+              xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  if (progBar) progBar.style.background = 'var(--success)';
+                  resolve();
+                } else {
+                  try {
+                    const errJson = JSON.parse(xhr.responseText);
+                    reject(new Error(errJson.errors?.[0]?.message || 'Upload failed'));
+                  } catch {
+                    reject(new Error('Upload failed (' + xhr.status + ')'));
+                  }
+                }
+              };
+
+              xhr.onerror = () => reject(new Error('Network error'));
+              xhr.send(formData);
+            });
+
+            log('resultLog', '  ✓ ' + file.name, 'ok');
+            uploaded++;
+          } catch(e) {
+            if (progBar) { progBar.style.background = 'var(--accent2)'; progBar.style.width = '100%'; }
+            log('resultLog', '  ✗ ' + file.name + ': ' + e.message, 'err');
+            failed++;
+          }
+        }
+
+        log('resultLog', '→ Attachments: ' + uploaded + ' uploaded' + (failed ? ', ' + failed + ' failed' : ''), failed ? 'err' : 'ok');
+      }
+
+      // Reset form for next bug
+      document.getElementById('bugTitle').value = '';
+      document.getElementById('reproSteps').value = '';
+      document.getElementById('expectedResult').value = '';
+      document.getElementById('actualResult').value = '';
+      document.getElementById('additionalInfo').value = '';
+      document.getElementById('reproCount').textContent = '0';
+      document.getElementById('previewBox').classList.remove('visible');
+      selectedFiles = [];
+      renderFileList();
+
+    } catch(e) {
+      log('resultLog', '✗ ' + e.message, 'err');
+    }
+
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('btnLabel').textContent = 'Create Bug Subtask';
+    document.getElementById('createBtn').disabled = false;
+  }
+</script>
+</body>
+</html>

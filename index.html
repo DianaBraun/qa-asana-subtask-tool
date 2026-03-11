@@ -420,6 +420,45 @@
     transition: width 0.3s ease;
   }
 
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 14px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+  }
+
+  .tab:first-child { border-right: 1px solid var(--border); }
+
+  .tab:hover { color: var(--text); background: var(--surface2); }
+
+  .tab.active {
+    color: var(--accent2);
+    background: var(--surface2);
+    font-weight: 700;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
   @media (max-width: 600px) {
     .row, .row-3 { grid-template-columns: 1fr; }
     h1 { font-size: 26px; }
@@ -432,115 +471,283 @@
   <header>
     <div class="label-tag">QA Tooling</div>
     <h1>Bug <span>Report</span> Creator</h1>
-    <p class="subtitle">Fill in the form → a bug subtask is created under your main task with all custom fields inherited.</p>
+    <p class="subtitle" id="headerSubtitle">Fill in the form → a bug subtask is created under your main task with all custom fields inherited.</p>
   </header>
 
-  <!-- AUTH -->
+  <!-- SHARED AUTH -->
   <div class="card">
     <div class="card-title">01 — Connect</div>
-    <div class="row">
-      <div class="field-group">
-        <label>Asana Personal Access Token</label>
-        <input type="password" id="token" placeholder="1/xxxxxxxx…" autocomplete="off"/>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-          <span class="field-hint" id="tokenHint"></span>
-          <button class="btn-forget" id="forgetBtn" onclick="forgetToken()" style="display:none;">Forget token</button>
-        </div>
+    <div class="field-group">
+      <label>Asana Personal Access Token</label>
+      <input type="password" id="token" placeholder="1/xxxxxxxx…" autocomplete="off"/>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+        <span class="field-hint" id="tokenHint"></span>
+        <button class="btn-forget" id="forgetBtn" onclick="forgetToken()" style="display:none;">Forget token</button>
       </div>
+    </div>
+  </div>
+
+  <!-- TAB SWITCHER -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('subtask')">Bug Subtask</button>
+    <button class="tab" onclick="switchTab('general')">General Bug</button>
+  </div>
+
+  <!-- ==================== TAB 1: BUG SUBTASK ==================== -->
+  <div class="tab-content active" id="tab-subtask">
+
+    <div class="card">
+      <div class="card-title">02 — Parent Task</div>
       <div class="field-group">
-        <label>Parent Task URL</label>
+        <label>Parent Task URL <span class="req">*</span></label>
         <input type="text" id="parentTaskInput" placeholder="Paste the main Asana task URL"/>
       </div>
+      <button class="btn-secondary" onclick="connect()">Connect & Load Task</button>
+      <div class="connected-badge" id="connBadge">Connected</div>
+      <div id="connLog" class="log"></div>
     </div>
-    <button class="btn-secondary" onclick="connect()">Connect & Load Task</button>
-    <div class="connected-badge" id="connBadge">Connected</div>
-    <div id="connLog" class="log"></div>
+
+    <div class="card">
+      <div class="card-title">03 — Bug Details</div>
+
+      <div class="row">
+        <div class="field-group">
+          <label>Device Type</label>
+          <input type="text" id="deviceType" placeholder="e.g. iPhone 15 Pro, Samsung Galaxy S24"/>
+        </div>
+        <div class="field-group">
+          <label>OS Version</label>
+          <input type="text" id="osVersion" placeholder="e.g. iOS 18.2, Android 15"/>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Bug Title <span class="req">*</span></label>
+        <input type="text" id="bugTitle" placeholder="[Platform] Short description of the bug"/>
+        <div class="template-chips">
+          <span class="chip" onclick="prefillTitle('bugTitle','[Web]')">[Web]</span>
+          <span class="chip" onclick="prefillTitle('bugTitle','[iOS]')">[iOS]</span>
+          <span class="chip" onclick="prefillTitle('bugTitle','[Android]')">[Android]</span>
+          <span class="chip" onclick="prefillTitle('bugTitle','[API]')">[API]</span>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="field-group">
+        <label>Steps to Reproduce <span class="req">*</span></label>
+        <textarea id="reproSteps" rows="4" placeholder="1. Go to …&#10;2. Click on …&#10;3. Observe …"></textarea>
+        <div class="char-count"><span id="reproCount">0</span> chars</div>
+      </div>
+
+      <div class="row">
+        <div class="field-group">
+          <label>Expected Result <span class="req">*</span></label>
+          <textarea id="expectedResult" rows="2" placeholder="What should happen"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Actual Result <span class="req">*</span></label>
+          <textarea id="actualResult" rows="2" placeholder="What actually happens"></textarea>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label>Additional Info</label>
+        <textarea id="additionalInfo" rows="2" placeholder="Browser, account details, screenshots link…"></textarea>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="field-group">
+        <label>Attachments</label>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" multiple/>
+          <div class="dropzone-icon">📎</div>
+          <div class="dropzone-text">Drag &amp; drop files here or <strong>browse</strong></div>
+          <div class="dropzone-hint">Screenshots, logs, HAR files — up to 100 MB each</div>
+        </div>
+        <div class="file-list" id="fileList"></div>
+      </div>
+    </div>
+
+    <div class="card" id="inheritedFieldsCard" style="display:none;">
+      <div class="card-title">04 — Inherited from Parent Task</div>
+      <div id="inheritedFieldsList"></div>
+      <p class="field-hint" style="margin-top:12px;">These fields will be automatically copied to the bug subtask.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="submitStep">Submit</div>
+      <button class="btn-secondary" onclick="showPreview()" style="margin-bottom:12px;">Preview Task</button>
+      <div class="preview-box" id="previewBox"></div>
+      <button class="btn-primary" id="createBtn" onclick="createBug()" disabled>
+        <div class="spinner" id="spinner"></div>
+        <span id="btnLabel">Create Bug Subtask</span>
+      </button>
+      <div id="resultLog" class="log"></div>
+    </div>
+
   </div>
 
-  <!-- BUG DETAILS -->
-  <div class="card">
-    <div class="card-title">02 — Bug Details</div>
+  <!-- ==================== TAB 2: GENERAL BUG ==================== -->
+  <div class="tab-content" id="tab-general">
 
-    <div class="row">
+    <div class="card">
+      <div class="card-title">02 — Destination</div>
+      <div class="preview-field">
+        <span class="pf-label">Project</span>
+        <span class="pf-value">All departments</span>
+      </div>
+      <div class="preview-field">
+        <span class="pf-label">Section</span>
+        <span class="pf-value">Refill Discussion</span>
+      </div>
+      <p class="field-hint" style="margin-top:10px;">General bugs are always created in this location.</p>
+      <div class="connected-badge" id="g_connBadge" style="display:none;">Ready</div>
+      <div id="g_connLog" class="log"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">03 — Environment</div>
+      <div class="row">
+        <div class="field-group">
+          <label>Device <span class="req">*</span></label>
+          <input type="text" id="g_device" placeholder="e.g. iPhone 15 Pro, Pixel 8, MacBook Air"/>
+        </div>
+        <div class="field-group">
+          <label>OS Version <span class="req">*</span></label>
+          <input type="text" id="g_osVersion" placeholder="e.g. iOS 18.2, Android 15"/>
+        </div>
+      </div>
+      <div class="row-3">
+        <div class="field-group">
+          <label>App Version <span class="req">*</span></label>
+          <input type="text" id="g_appVersion" placeholder="e.g. 4.2.1 (build 1087)"/>
+        </div>
+        <div class="field-group">
+          <label>Server</label>
+          <input type="text" id="g_server" placeholder="e.g. production, staging"/>
+        </div>
+        <div class="field-group">
+          <label>Test Account</label>
+          <input type="text" id="g_testAccount" placeholder="e.g. testuser@example.com"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">04 — Behavior</div>
+      <div class="row-3">
+        <div class="field-group">
+          <label>How Often <span class="req">*</span></label>
+          <select id="g_howOften">
+            <option value="">— select —</option>
+            <option value="Always (100%)">Always (100%)</option>
+            <option value="Often (70-90%)">Often (70-90%)</option>
+            <option value="Sometimes (30-70%)">Sometimes (30-70%)</option>
+            <option value="Rarely (10-30%)">Rarely (10-30%)</option>
+            <option value="Once">Once</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>In Release App?</label>
+          <select id="g_inRelease">
+            <option value="">— select —</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Not checked">Not checked</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Other Platform?</label>
+          <select id="g_otherPlatform">
+            <option value="">— select —</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Not checked">Not checked</option>
+            <option value="N/A">N/A</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">05 — Bug Description</div>
+
       <div class="field-group">
-        <label>Device Type</label>
-        <input type="text" id="deviceType" placeholder="e.g. iPhone 15 Pro, Samsung Galaxy S24, MacBook Pro"/>
+        <label>Bug Title <span class="req">*</span></label>
+        <input type="text" id="g_bugTitle" placeholder="[Platform] Short description of the bug"/>
+        <div class="template-chips">
+          <span class="chip" onclick="prefillTitle('g_bugTitle','[Web]')">[Web]</span>
+          <span class="chip" onclick="prefillTitle('g_bugTitle','[iOS]')">[iOS]</span>
+          <span class="chip" onclick="prefillTitle('g_bugTitle','[Android]')">[Android]</span>
+          <span class="chip" onclick="prefillTitle('g_bugTitle','[API]')">[API]</span>
+        </div>
       </div>
+
       <div class="field-group">
-        <label>OS Version</label>
-        <input type="text" id="osVersion" placeholder="e.g. iOS 18.2, Android 15, macOS 15.3"/>
+        <label>Preconditions</label>
+        <textarea id="g_preconditions" rows="2" placeholder="What needs to be set up before reproducing"></textarea>
       </div>
-    </div>
 
-    <div class="field-group">
-      <label>Bug Title <span class="req">*</span></label>
-      <input type="text" id="bugTitle" placeholder="[Platform] Short description of the bug"/>
-      <div class="template-chips">
-        <span class="chip" onclick="prefillTitle('[Web]')">[Web]</span>
-        <span class="chip" onclick="prefillTitle('[iOS]')">[iOS]</span>
-        <span class="chip" onclick="prefillTitle('[Android]')">[Android]</span>
-        <span class="chip" onclick="prefillTitle('[API]')">[API]</span>
-      </div>
-    </div>
-
-    <div class="section-divider"></div>
-
-    <div class="field-group">
-      <label>Steps to Reproduce <span class="req">*</span></label>
-      <textarea id="reproSteps" rows="4" placeholder="1. Go to …&#10;2. Click on …&#10;3. Observe …"></textarea>
-      <div class="char-count"><span id="reproCount">0</span> chars</div>
-    </div>
-
-    <div class="row">
       <div class="field-group">
-        <label>Expected Result <span class="req">*</span></label>
-        <textarea id="expectedResult" rows="2" placeholder="What should happen"></textarea>
+        <label>Steps to Reproduce <span class="req">*</span></label>
+        <textarea id="g_reproSteps" rows="4" placeholder="1. Go to …&#10;2. Click on …&#10;3. Observe …"></textarea>
       </div>
+
+      <div class="section-divider"></div>
+
+      <div class="row">
+        <div class="field-group">
+          <label>Actual Result <span class="req">*</span></label>
+          <textarea id="g_actual" rows="2" placeholder="What actually happens"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Expected Result <span class="req">*</span></label>
+          <textarea id="g_expected" rows="2" placeholder="What should happen"></textarea>
+        </div>
+      </div>
+
+      <div class="row-3">
+        <div class="field-group">
+          <label>Timestamp</label>
+          <input type="text" id="g_timestamp" placeholder="e.g. 2025-03-11 14:30 UTC"/>
+        </div>
+        <div class="field-group">
+          <label>System Log</label>
+          <input type="text" id="g_systemLog" placeholder="Link to logs or paste key lines"/>
+        </div>
+        <div class="field-group">
+          <label>Source</label>
+          <input type="text" id="g_source" placeholder="e.g. regression, new feature"/>
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
       <div class="field-group">
-        <label>Actual Result <span class="req">*</span></label>
-        <textarea id="actualResult" rows="2" placeholder="What actually happens"></textarea>
+        <label>Attachments</label>
+        <div class="dropzone" id="g_dropzone">
+          <input type="file" id="g_fileInput" multiple/>
+          <div class="dropzone-icon">📎</div>
+          <div class="dropzone-text">Drag &amp; drop files here or <strong>browse</strong></div>
+          <div class="dropzone-hint">Screenshots, logs, HAR files — up to 100 MB each</div>
+        </div>
+        <div class="file-list" id="g_fileList"></div>
       </div>
     </div>
 
-    <div class="field-group">
-      <label>Additional Info</label>
-      <textarea id="additionalInfo" rows="2" placeholder="Browser, OS, account details, screenshots link…"></textarea>
+    <div class="card">
+      <div class="card-title" id="g_submitStep">Submit</div>
+      <button class="btn-secondary" onclick="gShowPreview()" style="margin-bottom:12px;">Preview Task</button>
+      <div class="preview-box" id="g_previewBox"></div>
+      <button class="btn-primary" id="g_createBtn" onclick="gCreateBug()" disabled>
+        <div class="spinner" id="g_spinner"></div>
+        <span id="g_btnLabel">Create General Bug</span>
+      </button>
+      <div id="g_resultLog" class="log"></div>
     </div>
 
-    <div class="section-divider"></div>
-
-    <div class="field-group">
-      <label>Attachments</label>
-      <div class="dropzone" id="dropzone">
-        <input type="file" id="fileInput" multiple/>
-        <div class="dropzone-icon">📎</div>
-        <div class="dropzone-text">Drag &amp; drop files here or <strong>browse</strong></div>
-        <div class="dropzone-hint">Screenshots, logs, HAR files — up to 100 MB each</div>
-      </div>
-      <div class="file-list" id="fileList"></div>
-    </div>
-  </div>
-
-  <!-- INHERITED FIELDS PREVIEW -->
-  <div class="card" id="inheritedFieldsCard" style="display:none;">
-    <div class="card-title">03 — Inherited from Parent Task</div>
-    <div id="inheritedFieldsList"></div>
-    <p class="field-hint" style="margin-top:12px;">These fields will be automatically copied to the bug subtask.</p>
-  </div>
-
-  <!-- PREVIEW & SUBMIT -->
-  <div class="card">
-    <div class="card-title" id="submitStep">Submit</div>
-    <button class="btn-secondary" onclick="showPreview()" style="margin-bottom:12px;">Preview Task</button>
-
-    <div class="preview-box" id="previewBox"></div>
-
-    <button class="btn-primary" id="createBtn" onclick="createBug()" disabled>
-      <div class="spinner" id="spinner"></div>
-      <span id="btnLabel">Create Bug Subtask</span>
-    </button>
-
-    <div id="resultLog" class="log"></div>
   </div>
 </div>
 
@@ -680,8 +887,8 @@
     }).join('');
   }
 
-  function prefillTitle(prefix) {
-    const el = document.getElementById('bugTitle');
+  function prefillTitle(elId, prefix) {
+    const el = document.getElementById(elId);
     if (!el.value.startsWith('[')) {
       el.value = prefix + ' ' + el.value;
     } else {
@@ -795,21 +1002,6 @@
         // Skip Entered Testing — leave empty on subtask
         if (nameLower === 'entered testing' || nameLower.includes('entered testing')) {
           inheritedFieldsDisplay.push({ name: f.name, value: '— (skipped)' });
-          return;
-        }
-
-        // Force Work Type to "BugFix"
-        if (nameLower === 'work type' && f.resource_subtype === 'enum') {
-          const bugfixOption = (f.enum_options || []).find(opt =>
-            opt.name && opt.name.toLowerCase() === 'bugfix'
-          );
-          if (bugfixOption) {
-            inheritedCustomFields[f.gid] = bugfixOption.gid;
-            inheritedFieldsDisplay.push({ name: f.name, value: 'BugFix (forced)' });
-          } else {
-            inheritedFieldsDisplay.push({ name: f.name, value: displayVal || '— (BugFix option not found)' });
-            if (f.enum_value) inheritedCustomFields[f.gid] = f.enum_value.gid;
-          }
           return;
         }
 
@@ -1087,6 +1279,347 @@
     document.getElementById('spinner').style.display = 'none';
     document.getElementById('btnLabel').textContent = 'Create Bug Subtask';
     document.getElementById('createBtn').disabled = false;
+  }
+
+  // ==================== TAB SWITCHING ====================
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+    if (tab === 'subtask') {
+      document.querySelectorAll('.tab')[0].classList.add('active');
+      document.getElementById('tab-subtask').classList.add('active');
+      document.getElementById('headerSubtitle').textContent = 'Fill in the form → a bug subtask is created under your main task with all custom fields inherited.';
+    } else {
+      document.querySelectorAll('.tab')[1].classList.add('active');
+      document.getElementById('tab-general').classList.add('active');
+      document.getElementById('headerSubtitle').textContent = 'Create a standalone bug task in a project with full environment and reproduction details.';
+      // Auto-setup project fields if not done yet
+      if (!g_projectReady && document.getElementById('token').value.trim()) {
+        gAutoSetup();
+      }
+    }
+  }
+
+  // ==================== GENERAL BUG FLOW ====================
+
+  const G_PROJECT_GID = '1204381470428996';
+  const G_SECTION_GID = '1209141124494945';
+  let g_statusFieldGid = '';
+  let g_statusOptionGid = '';  // "Refill Discussion"
+  let g_projectReady = false;
+  let g_selectedFiles = [];
+
+  // File upload handling for general tab
+  const g_dropzone = document.getElementById('g_dropzone');
+  const g_fileInput = document.getElementById('g_fileInput');
+
+  g_dropzone.addEventListener('dragover', e => { e.preventDefault(); g_dropzone.classList.add('dragover'); });
+  g_dropzone.addEventListener('dragleave', () => g_dropzone.classList.remove('dragover'));
+  g_dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    g_dropzone.classList.remove('dragover');
+    gAddFiles(e.dataTransfer.files);
+  });
+
+  g_fileInput.addEventListener('change', e => {
+    gAddFiles(e.target.files);
+    g_fileInput.value = '';
+  });
+
+  // Auto-setup: load project custom fields to find status field
+  async function gAutoSetup() {
+    apiToken = document.getElementById('token').value.trim();
+    if (!apiToken) return;
+
+    document.getElementById('g_connLog').innerHTML = '';
+
+    try {
+      log('g_connLog', '→ Loading project fields…', 'info');
+      const proj = await apiGet('/projects/' + G_PROJECT_GID + '?opt_fields=name,custom_field_settings.custom_field.name,custom_field_settings.custom_field.gid,custom_field_settings.custom_field.resource_subtype,custom_field_settings.custom_field.enum_options');
+
+      // Find the status field and "Refill Discussion" option
+      const fields = (proj.custom_field_settings || []).map(s => s.custom_field).filter(Boolean);
+      for (const f of fields) {
+        if (f.resource_subtype === 'enum' && f.enum_options?.length) {
+          const match = f.enum_options.find(opt =>
+            opt.name && opt.name.toLowerCase().includes('refill discussion')
+          );
+          if (match) {
+            g_statusFieldGid = f.gid;
+            g_statusOptionGid = match.gid;
+            log('g_connLog', '✓ Status field: ' + f.name + ' → Refill Discussion', 'ok');
+            break;
+          }
+        }
+      }
+
+      if (!g_statusOptionGid) {
+        log('g_connLog', '⚠ "Refill Discussion" status not found — task will be created without it', 'info');
+      }
+
+      g_projectReady = true;
+      document.getElementById('g_connBadge').classList.add('visible');
+      document.getElementById('g_createBtn').disabled = false;
+      document.getElementById('g_submitStep').textContent = 'Submit → All departments / Refill Discussion';
+      log('g_connLog', '✓ Ready', 'ok');
+    } catch(e) {
+      log('g_connLog', '✗ ' + e.message, 'err');
+    }
+  }
+
+  g_fileInput.addEventListener('change', e => {
+    gAddFiles(e.target.files);
+    g_fileInput.value = '';
+  });
+
+  function gAddFiles(fileListObj) {
+    for (const file of fileListObj) {
+      if (g_selectedFiles.some(f => f.name === file.name && f.size === file.size)) continue;
+      g_selectedFiles.push(file);
+    }
+    gRenderFileList();
+  }
+
+  function gRemoveFile(index) {
+    g_selectedFiles.splice(index, 1);
+    gRenderFileList();
+  }
+
+  function gRenderFileList() {
+    const container = document.getElementById('g_fileList');
+    if (g_selectedFiles.length === 0) { container.innerHTML = ''; return; }
+
+    container.innerHTML = g_selectedFiles.map((file, i) => {
+      const isImage = file.type.startsWith('image/');
+      const thumbHtml = isImage
+        ? `<div class="file-thumb"><img src="${URL.createObjectURL(file)}" alt=""/></div>`
+        : `<div class="file-thumb">${fileIcon(file.name)}</div>`;
+
+      return `<div class="file-item">
+        ${thumbHtml}
+        <div class="file-info">
+          <div class="file-name" title="${file.name}">${file.name}</div>
+          <div class="file-size">${formatSize(file.size)}</div>
+          <div class="upload-progress" id="g_prog_${i}"><div class="upload-progress-bar" id="g_progbar_${i}"></div></div>
+        </div>
+        <button class="file-remove" onclick="gRemoveFile(${i})" title="Remove">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  // Reset when project URL changes
+  // (removed — project is hardcoded)
+
+  // gConnect replaced by gAutoSetup (project is hardcoded)
+
+  function gBuildDescription() {
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const nl = s => esc(s).replace(/\n/g, '\n');
+
+    const v = id => (document.getElementById(id).value || '').trim();
+
+    let html = '<body>';
+
+    // Environment block
+    html += '<b>Device:</b> ' + esc(v('g_device')) + '\n';
+    html += '<b>OS Version:</b> ' + esc(v('g_osVersion')) + '\n';
+    html += '<b>App Version:</b> ' + esc(v('g_appVersion')) + '\n';
+    if (v('g_server')) html += '<b>Server:</b> ' + esc(v('g_server')) + '\n';
+    if (v('g_testAccount')) html += '<b>Test Account:</b> ' + esc(v('g_testAccount')) + '\n';
+    html += '\n';
+
+    // Behavior block
+    html += '<b>How Often:</b> ' + esc(v('g_howOften')) + '\n';
+    if (v('g_inRelease')) html += '<b>Issue Exists in Release App:</b> ' + esc(v('g_inRelease')) + '\n';
+    if (v('g_otherPlatform')) html += '<b>Reproduce on Another Platform:</b> ' + esc(v('g_otherPlatform')) + '\n';
+    html += '\n';
+
+    // Description block
+    if (v('g_preconditions')) html += '<b>Preconditions:</b>\n' + nl(v('g_preconditions')) + '\n\n';
+
+    html += '<b>Steps to Reproduce:</b>\n' + nl(v('g_reproSteps')) + '\n\n';
+    html += '<b>Actual Result:</b>\n' + nl(v('g_actual')) + '\n\n';
+    html += '<b>Expected Result:</b>\n' + nl(v('g_expected'));
+
+    // Evidence block
+    const ts = v('g_timestamp'), slog = v('g_systemLog'), src = v('g_source');
+    if (ts || slog || src) {
+      html += '\n\n';
+      if (ts) html += '<b>Timestamp:</b> ' + esc(ts) + '\n';
+      if (slog) html += '<b>System Log:</b> ' + esc(slog) + '\n';
+      if (src) html += '<b>Source:</b> ' + esc(src) + '\n';
+    }
+
+    html += '</body>';
+    return html;
+  }
+
+  function gShowPreview() {
+    const box = document.getElementById('g_previewBox');
+    const title = document.getElementById('g_bugTitle').value.trim();
+    if (!title) { alert('Please enter a bug title.'); return; }
+
+    const v = id => document.getElementById(id).value || '—';
+
+    const fields = [
+      ['Title', title],
+      ['Destination', 'All departments → Refill Discussion'],
+      ['Device', v('g_device')],
+      ['OS Version', v('g_osVersion')],
+      ['App Version', v('g_appVersion')],
+      ['How Often', v('g_howOften')],
+      ['Attachments', g_selectedFiles.length ? g_selectedFiles.length + ' file(s)' : 'None'],
+    ];
+
+    box.innerHTML = '<div class="preview-title">Task Preview</div>' +
+      fields.map(([l, val]) =>
+        `<div class="preview-field"><span class="pf-label">${l}</span><span class="pf-value">${val}</span></div>`
+      ).join('');
+
+    box.classList.add('visible');
+  }
+
+  async function gCreateBug() {
+    const title = document.getElementById('g_bugTitle').value.trim();
+    const device = document.getElementById('g_device').value.trim();
+    const osVer = document.getElementById('g_osVersion').value.trim();
+    const appVer = document.getElementById('g_appVersion').value.trim();
+    const howOften = document.getElementById('g_howOften').value;
+    const repro = document.getElementById('g_reproSteps').value.trim();
+    const actual = document.getElementById('g_actual').value.trim();
+    const expected = document.getElementById('g_expected').value.trim();
+
+    if (!title) return log('g_resultLog', '✗ Bug title is required', 'err');
+    if (!device) return log('g_resultLog', '✗ Device is required', 'err');
+    if (!osVer) return log('g_resultLog', '✗ OS Version is required', 'err');
+    if (!appVer) return log('g_resultLog', '✗ App Version is required', 'err');
+    if (!howOften) return log('g_resultLog', '✗ How Often is required', 'err');
+    if (!repro) return log('g_resultLog', '✗ Steps to Reproduce are required', 'err');
+    if (!actual) return log('g_resultLog', '✗ Actual Result is required', 'err');
+    if (!expected) return log('g_resultLog', '✗ Expected Result is required', 'err');
+    if (!g_projectReady) return log('g_resultLog', '✗ Not connected — switch to General Bug tab to auto-setup', 'err');
+
+    document.getElementById('g_resultLog').innerHTML = '';
+    document.getElementById('g_spinner').style.display = 'block';
+    document.getElementById('g_btnLabel').textContent = 'Creating…';
+    document.getElementById('g_createBtn').disabled = true;
+
+    try {
+      const description = gBuildDescription();
+
+      const body = {
+        data: {
+          name: title,
+          html_notes: description,
+          projects: [G_PROJECT_GID]
+        }
+      };
+
+      // Set status to "Refill Discussion"
+      if (g_statusFieldGid && g_statusOptionGid) {
+        body.data.custom_fields = {};
+        body.data.custom_fields[g_statusFieldGid] = g_statusOptionGid;
+      }
+
+      log('g_resultLog', '→ Creating task…', 'info');
+
+      const res = await fetch('https://app.asana.com/api/1.0/tasks', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + apiToken,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.errors?.[0]?.message || 'Error');
+
+      const taskGid = json.data.gid;
+      const taskUrl = 'https://app.asana.com/0/' + G_PROJECT_GID + '/' + taskGid;
+      log('g_resultLog', '✓ Task created: ' + json.data.name, 'ok');
+
+      // Move to the correct section
+      try {
+        log('g_resultLog', '→ Moving to section…', 'info');
+        await fetch('https://app.asana.com/api/1.0/sections/' + G_SECTION_GID + '/addTask', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + apiToken,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ data: { task: taskGid } })
+        });
+        log('g_resultLog', '✓ Moved to All departments / Refill Discussion', 'ok');
+      } catch(e) {
+        log('g_resultLog', '⚠ Could not move to section: ' + e.message, 'err');
+      }
+
+      log('g_resultLog', '→ ' + taskUrl, 'info');
+
+      // Upload attachments
+      if (g_selectedFiles.length > 0) {
+        log('g_resultLog', '→ Uploading ' + g_selectedFiles.length + ' attachment(s)…', 'info');
+        document.querySelectorAll('#tab-general .file-remove').forEach(btn => btn.disabled = true);
+
+        let uploaded = 0, failed = 0;
+        for (let i = 0; i < g_selectedFiles.length; i++) {
+          const file = g_selectedFiles[i];
+          const progEl = document.getElementById('g_prog_' + i);
+          const progBar = document.getElementById('g_progbar_' + i);
+          if (progEl) progEl.classList.add('active');
+
+          try {
+            const formData = new FormData();
+            formData.append('file', file, file.name);
+
+            await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.open('POST', 'https://app.asana.com/api/1.0/tasks/' + taskGid + '/attachments');
+              xhr.setRequestHeader('Authorization', 'Bearer ' + apiToken);
+              xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && progBar) progBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+              };
+              xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) { if (progBar) progBar.style.background = 'var(--success)'; resolve(); }
+                else { try { reject(new Error(JSON.parse(xhr.responseText).errors?.[0]?.message || 'Upload failed')); } catch { reject(new Error('Upload failed')); } }
+              };
+              xhr.onerror = () => reject(new Error('Network error'));
+              xhr.send(formData);
+            });
+            log('g_resultLog', '  ✓ ' + file.name, 'ok');
+            uploaded++;
+          } catch(e) {
+            if (progBar) { progBar.style.background = 'var(--accent2)'; progBar.style.width = '100%'; }
+            log('g_resultLog', '  ✗ ' + file.name + ': ' + e.message, 'err');
+            failed++;
+          }
+        }
+        log('g_resultLog', '→ Attachments: ' + uploaded + ' uploaded' + (failed ? ', ' + failed + ' failed' : ''), failed ? 'err' : 'ok');
+      }
+
+      // Reset form
+      ['g_bugTitle','g_device','g_osVersion','g_appVersion','g_server','g_testAccount',
+       'g_preconditions','g_reproSteps','g_actual','g_expected',
+       'g_timestamp','g_systemLog','g_source'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('g_howOften').value = '';
+      document.getElementById('g_inRelease').value = '';
+      document.getElementById('g_otherPlatform').value = '';
+      document.getElementById('g_previewBox').classList.remove('visible');
+      g_selectedFiles = [];
+      gRenderFileList();
+
+    } catch(e) {
+      log('g_resultLog', '✗ ' + e.message, 'err');
+    }
+
+    document.getElementById('g_spinner').style.display = 'none';
+    document.getElementById('g_btnLabel').textContent = 'Create General Bug';
+    document.getElementById('g_createBtn').disabled = false;
   }
 </script>
 </body>

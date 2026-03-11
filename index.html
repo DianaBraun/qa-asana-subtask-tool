@@ -189,6 +189,27 @@
 
   .chip:hover { border-color: var(--accent); color: var(--accent); }
 
+  .chip-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .chip-option:hover { border-color: var(--accent); color: var(--accent); }
+  .chip-option.selected { border-color: var(--accent2); color: var(--accent2); background: rgba(232,93,74,0.1); }
+
   .log {
     background: var(--surface2);
     border-radius: 8px;
@@ -672,7 +693,30 @@
     </div>
 
     <div class="card">
-      <div class="card-title">05 — Bug Description</div>
+      <div class="card-title">05 — Asana Fields</div>
+      <p class="field-hint" style="margin-bottom:14px;">These fields are loaded from the project. Switch to the General Bug tab to populate them.</p>
+      <div class="row">
+        <div class="field-group">
+          <label>QA</label>
+          <select id="g_qa"><option value="">— loading… —</option></select>
+        </div>
+        <div class="field-group">
+          <label>Environment</label>
+          <select id="g_environment"><option value="">— loading… —</option></select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Product</label>
+        <div class="chip-select" id="g_productChips">Loading…</div>
+      </div>
+      <div class="field-group">
+        <label>Platform</label>
+        <div class="chip-select" id="g_platformChips">Loading…</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">06 — Bug Description</div>
 
       <div class="field-group">
         <label>Bug Title <span class="req">*</span></label>
@@ -1306,8 +1350,6 @@
 
   const G_PROJECT_GID = '1204381470428996';
   const G_SECTION_GID = '1209141124494945';
-  let g_statusFieldGid = '';
-  let g_statusOptionGid = '';  // "Refill Discussion"
   let g_projectReady = false;
   let g_selectedFiles = [];
 
@@ -1328,7 +1370,7 @@
     g_fileInput.value = '';
   });
 
-  // Auto-setup: load project custom fields to find status field
+  // Auto-setup: verify project access and load field options
   async function gAutoSetup() {
     apiToken = document.getElementById('token').value.trim();
     if (!apiToken) return;
@@ -1336,33 +1378,81 @@
     document.getElementById('g_connLog').innerHTML = '';
 
     try {
-      log('g_connLog', '→ Loading project fields…', 'info');
+      log('g_connLog', '→ Verifying access…', 'info');
+      const me = await apiGet('/users/me');
+      workspaceGid = me.workspaces?.[0]?.gid || '';
+      log('g_connLog', '✓ Hello, ' + me.name, 'ok');
+      saveToken(apiToken);
+
+      log('g_connLog', '→ Loading project…', 'info');
       const proj = await apiGet('/projects/' + G_PROJECT_GID + '?opt_fields=name,custom_field_settings.custom_field.name,custom_field_settings.custom_field.gid,custom_field_settings.custom_field.resource_subtype,custom_field_settings.custom_field.enum_options');
+      log('g_connLog', '✓ Project: ' + proj.name, 'ok');
 
-      // Find the status field and "Refill Discussion" option
+      // QA dropdown — hardcoded team
+      const qaSelect = document.getElementById('g_qa');
+      qaSelect.innerHTML = '<option value="">— select —</option>';
+      const qaTeam = [
+        { gid: '1204341978546807', name: 'Diana Braun' },
+        { gid: '1210132719934637', name: 'Makovskyi Mykyta' },
+        { gid: '1208658482591722', name: 'Mariia Androniak' },
+        { gid: '1208488635664382', name: 'Mykhailo Kaplan' },
+        { gid: '1204387882357487', name: 'Olesia Bobryk' },
+      ];
+      qaTeam.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.gid;
+        opt.textContent = u.name;
+        qaSelect.appendChild(opt);
+      });
+      log('g_connLog', '✓ QA team loaded', 'ok');
+
+      // Populate field dropdowns from project custom fields
       const fields = (proj.custom_field_settings || []).map(s => s.custom_field).filter(Boolean);
-      for (const f of fields) {
-        if (f.resource_subtype === 'enum' && f.enum_options?.length) {
-          const match = f.enum_options.find(opt =>
-            opt.name && opt.name.toLowerCase().includes('refill discussion')
-          );
-          if (match) {
-            g_statusFieldGid = f.gid;
-            g_statusOptionGid = match.gid;
-            log('g_connLog', '✓ Status field: ' + f.name + ' → Refill Discussion', 'ok');
-            break;
-          }
-        }
-      }
 
-      if (!g_statusOptionGid) {
-        log('g_connLog', '⚠ "Refill Discussion" status not found — task will be created without it', 'info');
-      }
+      fields.forEach(f => {
+        // Environment (enum)
+        if (f.gid === '1204381598682273' && f.enum_options) {
+          const sel = document.getElementById('g_environment');
+          sel.innerHTML = '<option value="">— select —</option>';
+          f.enum_options.filter(o => o.enabled !== false).forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o.gid;
+            opt.textContent = o.name;
+            sel.appendChild(opt);
+          });
+        }
+        // Product (multi_enum)
+        if (f.gid === '1205917806230003' && f.enum_options) {
+          const container = document.getElementById('g_productChips');
+          container.innerHTML = '';
+          f.enum_options.filter(o => o.enabled !== false).forEach(o => {
+            const chip = document.createElement('span');
+            chip.className = 'chip-option';
+            chip.dataset.gid = o.gid;
+            chip.textContent = o.name;
+            chip.onclick = () => chip.classList.toggle('selected');
+            container.appendChild(chip);
+          });
+        }
+        // Platform (multi_enum)
+        if (f.gid === '1204381593466886' && f.enum_options) {
+          const container = document.getElementById('g_platformChips');
+          container.innerHTML = '';
+          f.enum_options.filter(o => o.enabled !== false).forEach(o => {
+            const chip = document.createElement('span');
+            chip.className = 'chip-option';
+            chip.dataset.gid = o.gid;
+            chip.textContent = o.name;
+            chip.onclick = () => chip.classList.toggle('selected');
+            container.appendChild(chip);
+          });
+        }
+      });
 
       g_projectReady = true;
-      document.getElementById('g_connBadge').classList.add('visible');
+      document.getElementById('g_connBadge').style.display = 'inline-flex';
       document.getElementById('g_createBtn').disabled = false;
-      document.getElementById('g_submitStep').textContent = 'Submit → All departments / Refill Discussion';
+      document.getElementById('g_submitStep').textContent = 'Submit → ' + proj.name + ' / Refill Discussion';
       log('g_connLog', '✓ Ready', 'ok');
     } catch(e) {
       log('g_connLog', '✗ ' + e.message, 'err');
@@ -1470,6 +1560,10 @@
       ['OS Version', v('g_osVersion')],
       ['App Version', v('g_appVersion')],
       ['How Often', v('g_howOften')],
+      ['QA', document.getElementById('g_qa').options[document.getElementById('g_qa').selectedIndex]?.text || '—'],
+      ['Environment', document.getElementById('g_environment').options[document.getElementById('g_environment').selectedIndex]?.text || '—'],
+      ['Product', [...document.querySelectorAll('#g_productChips .chip-option.selected')].map(c => c.textContent).join(', ') || '—'],
+      ['Platform', [...document.querySelectorAll('#g_platformChips .chip-option.selected')].map(c => c.textContent).join(', ') || '—'],
       ['Attachments', g_selectedFiles.length ? g_selectedFiles.length + ' file(s)' : 'None'],
     ];
 
@@ -1509,19 +1603,35 @@
     try {
       const description = gBuildDescription();
 
+      const customFields = {
+        '1211564462448171': '1211565251218084',  // Work type: Bug General
+        '1211564575408137': '1211574888067679'   // Origin: QA team
+      };
+
+      // QA (people field)
+      const qaGid = document.getElementById('g_qa').value;
+      if (qaGid) customFields['1206611279172609'] = qaGid;
+
+      // Environment (enum)
+      const envGid = document.getElementById('g_environment').value;
+      if (envGid) customFields['1204381598682273'] = envGid;
+
+      // Product (multi_enum)
+      const productGids = [...document.querySelectorAll('#g_productChips .chip-option.selected')].map(c => c.dataset.gid);
+      if (productGids.length) customFields['1205917806230003'] = productGids;
+
+      // Platform (multi_enum)
+      const platformGids = [...document.querySelectorAll('#g_platformChips .chip-option.selected')].map(c => c.dataset.gid);
+      if (platformGids.length) customFields['1204381593466886'] = platformGids;
+
       const body = {
         data: {
           name: title,
           html_notes: description,
-          projects: [G_PROJECT_GID]
+          projects: [G_PROJECT_GID],
+          custom_fields: customFields
         }
       };
-
-      // Set status to "Refill Discussion"
-      if (g_statusFieldGid && g_statusOptionGid) {
-        body.data.custom_fields = {};
-        body.data.custom_fields[g_statusFieldGid] = g_statusOptionGid;
-      }
 
       log('g_resultLog', '→ Creating task…', 'info');
 
@@ -1609,6 +1719,10 @@
       document.getElementById('g_howOften').value = '';
       document.getElementById('g_inRelease').value = '';
       document.getElementById('g_otherPlatform').value = '';
+      document.getElementById('g_qa').value = '';
+      document.getElementById('g_environment').value = '';
+      document.querySelectorAll('#g_productChips .chip-option').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('#g_platformChips .chip-option').forEach(c => c.classList.remove('selected'));
       document.getElementById('g_previewBox').classList.remove('visible');
       g_selectedFiles = [];
       gRenderFileList();

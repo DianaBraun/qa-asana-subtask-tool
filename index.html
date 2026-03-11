@@ -695,33 +695,9 @@
     <div class="card">
       <div class="card-title">05 — Asana Fields</div>
       <p class="field-hint" style="margin-bottom:14px;">QA selected here will also be the task assignee.</p>
-      <div class="row">
-        <div class="field-group">
-          <label>QA (Assignee) <span class="req">*</span></label>
-          <select id="g_qa"><option value="">— loading… —</option></select>
-        </div>
-        <div class="field-group">
-          <label>Discipline</label>
-          <select id="g_discipline">
-            <option value="">— select —</option>
-            <option value="1211564476410417">Frontend</option>
-            <option value="1211564476410418">Backend</option>
-            <option value="1211564481310084">QA</option>
-            <option value="1211564481310085">AQA</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="field-group">
-          <label>Environment</label>
-          <select id="g_environment"><option value="">— loading… —</option></select>
-        </div>
-        <div class="field-group" style="display:flex; align-items:flex-end; padding-bottom:4px;">
-          <label class="checkbox-label" style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-bottom:0;">
-            <input type="checkbox" id="g_foundByAutomation" style="width:auto; accent-color:var(--accent2); transform:scale(1.3); cursor:pointer;"/>
-            <span>Found by automation</span>
-          </label>
-        </div>
+      <div class="field-group">
+        <label>QA (Assignee) <span class="req">*</span></label>
+        <select id="g_qa"><option value="">— loading… —</option></select>
       </div>
       <div class="field-group">
         <label>Product</label>
@@ -1424,16 +1400,6 @@
       });
       log('g_connLog', '✓ QA team loaded', 'ok');
 
-      // Environment — hardcoded (Prod/Stage)
-      const envSelect = document.getElementById('g_environment');
-      envSelect.innerHTML = '<option value="">— select —</option>';
-      [{ gid: '1204381598682275', name: 'Prod' }, { gid: '1207414192651618', name: 'Stage' }].forEach(o => {
-        const opt = document.createElement('option');
-        opt.value = o.gid;
-        opt.textContent = o.name;
-        envSelect.appendChild(opt);
-      });
-
       // Populate field dropdowns from project custom fields
       const fields = (proj.custom_field_settings || []).map(s => s.custom_field).filter(Boolean);
 
@@ -1578,9 +1544,6 @@
       ['App Version', v('g_appVersion')],
       ['How Often', v('g_howOften')],
       ['QA (Assignee)', document.getElementById('g_qa').options[document.getElementById('g_qa').selectedIndex]?.text || '—'],
-      ['Discipline', document.getElementById('g_discipline').options[document.getElementById('g_discipline').selectedIndex]?.text || '—'],
-      ['Environment', document.getElementById('g_environment').options[document.getElementById('g_environment').selectedIndex]?.text || '—'],
-      ['Found by automation', document.getElementById('g_foundByAutomation').checked ? 'Yes' : 'No'],
       ['Product', [...document.querySelectorAll('#g_productChips .chip-option.selected')].map(c => c.textContent).join(', ') || '—'],
       ['Platform', [...document.querySelectorAll('#g_platformChips .chip-option.selected')].map(c => c.textContent).join(', ') || '—'],
       ['Attachments', g_selectedFiles.length ? g_selectedFiles.length + ' file(s)' : 'None'],
@@ -1632,19 +1595,6 @@
 
       // QA (people field)
       customFields['1206611279172609'] = qaGid;
-
-      // Discipline (enum)
-      const discGid = document.getElementById('g_discipline').value;
-      if (discGid) customFields['1211564476410414'] = discGid;
-
-      // Environment (enum)
-      const envGid = document.getElementById('g_environment').value;
-      if (envGid) customFields['1204381598682273'] = envGid;
-
-      // found_by_automation (multi_enum)
-      if (document.getElementById('g_foundByAutomation').checked) {
-        customFields['1209124357004087'] = ['1209124357004090'];
-      }
 
       // Product (multi_enum)
       const productGids = [...document.querySelectorAll('#g_productChips .chip-option.selected')].map(c => c.dataset.gid);
@@ -1751,9 +1701,6 @@
       document.getElementById('g_inRelease').value = '';
       document.getElementById('g_otherPlatform').value = '';
       document.getElementById('g_qa').value = '';
-      document.getElementById('g_discipline').value = '';
-      document.getElementById('g_environment').value = '';
-      document.getElementById('g_foundByAutomation').checked = false;
       document.querySelectorAll('#g_productChips .chip-option').forEach(c => c.classList.remove('selected'));
       document.querySelectorAll('#g_platformChips .chip-option').forEach(c => c.classList.remove('selected'));
       document.getElementById('g_previewBox').classList.remove('visible');

@@ -774,6 +774,12 @@
           return;
         }
 
+        // Skip Entered Testing — leave empty on subtask
+        if (nameLower === 'entered testing' || nameLower.includes('entered testing')) {
+          inheritedFieldsDisplay.push({ name: f.name, value: '— (skipped)' });
+          return;
+        }
+
         // Force Origin to "QA team"
         if (nameLower === 'origin' && f.resource_subtype === 'enum') {
           const qaOption = (f.enum_options || []).find(opt =>

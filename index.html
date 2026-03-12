@@ -663,6 +663,14 @@
           <input type="text" id="g_testAccount" placeholder="e.g. testuser@example.com"/>
         </div>
       </div>
+      <div class="field-group">
+        <label>Environment</label>
+        <select id="g_envSelect">
+          <option value="">— select —</option>
+          <option value="Stage">Stage</option>
+          <option value="Prod">Prod</option>
+        </select>
+      </div>
     </div>
 
     <div class="card">
@@ -1551,6 +1559,8 @@
     html += '<b>App Version:</b> ' + esc(v('g_appVersion')) + '\n';
     if (v('g_server')) html += '<b>Server:</b> ' + esc(v('g_server')) + '\n';
     if (v('g_testAccount')) html += '<b>Test Account:</b> ' + esc(v('g_testAccount')) + '\n';
+    const gEnvSel = document.getElementById('g_envSelect');
+    if (gEnvSel.selectedIndex > 0) html += '<b>Environment:</b> ' + esc(gEnvSel.value) + '\n';
     html += '\n';
 
     // Behavior block
@@ -1592,6 +1602,7 @@
       ['Device', v('g_device')],
       ['OS Version', v('g_osVersion')],
       ['App Version', v('g_appVersion')],
+      ['Environment', document.getElementById('g_envSelect').selectedIndex > 0 ? document.getElementById('g_envSelect').value : '—'],
       ['How Often', v('g_howOften')],
       ['QA (Assignee)', document.getElementById('g_qa').options[document.getElementById('g_qa').selectedIndex]?.text || '—'],
       ['Product', [...document.querySelectorAll('#g_productChips .chip-option.selected')].map(c => c.textContent).join(', ') || '—'],
@@ -1750,6 +1761,7 @@
       document.getElementById('g_howOften').value = '';
       document.getElementById('g_inRelease').value = '';
       document.getElementById('g_otherPlatform').value = '';
+      document.getElementById('g_envSelect').selectedIndex = 0;
       document.getElementById('g_qa').value = '';
       document.querySelectorAll('#g_productChips .chip-option').forEach(c => c.classList.remove('selected'));
       document.querySelectorAll('#g_platformChips .chip-option').forEach(c => c.classList.remove('selected'));

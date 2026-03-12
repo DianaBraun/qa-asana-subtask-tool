@@ -543,6 +543,15 @@
       </div>
 
       <div class="field-group">
+        <label>Environment</label>
+        <select id="envSelect">
+          <option value="">— select —</option>
+          <option value="Stage">Stage</option>
+          <option value="Prod">Prod</option>
+        </select>
+      </div>
+
+      <div class="field-group">
         <label>Bug Title <span class="req">*</span></label>
         <input type="text" id="bugTitle" placeholder="[Platform] Short description of the bug"/>
         <div class="template-chips">
@@ -799,6 +808,8 @@
   let parentTaskName = '';
   let parentAssignee = '';
   let selectedFiles = [];
+  let envFieldGid = '';
+  let envEnumOptions = [];
 
   // --- Token persistence ---
   const STORAGE_KEY = 'qa_bug_creator_token';
@@ -1043,6 +1054,13 @@
           return;
         }
 
+        // Capture Environment field GID and options
+        if (nameLower === 'environment' && f.resource_subtype === 'enum') {
+          envFieldGid = f.gid;
+          envEnumOptions = f.enum_options || [];
+          return;
+        }
+
         // Force Origin to "QA team"
         if (nameLower === 'origin' && f.resource_subtype === 'enum') {
           const qaOption = (f.enum_options || []).find(opt =>
@@ -1149,9 +1167,13 @@
 
     let html = '<body>';
 
-    if (device || os) {
+    const envSel = document.getElementById('envSelect');
+    const envText = envSel.selectedIndex > 0 ? envSel.options[envSel.selectedIndex].text : '';
+
+    if (device || os || envText) {
       if (device) html += '<b>Device Type:</b> ' + esc(device) + '\n';
       if (os) html += '<b>OS Version:</b> ' + esc(os) + '\n';
+      if (envText) html += '<b>Environment:</b> ' + esc(envText) + '\n';
       html += '\n';
     }
 
@@ -1177,6 +1199,7 @@
       ['Title', title],
       ['Device Type', document.getElementById('deviceType').value || '—'],
       ['OS Version', document.getElementById('osVersion').value || '—'],
+      ['Environment', document.getElementById('envSelect').selectedIndex > 0 ? document.getElementById('envSelect').options[document.getElementById('envSelect').selectedIndex].text : '—'],
       ['Parent Task', parentTaskName],
       ['Attachments', selectedFiles.length ? selectedFiles.length + ' file(s)' : 'None'],
     ];
@@ -1222,6 +1245,17 @@
           custom_fields: inheritedCustomFields
         }
       };
+
+      // Set Environment custom field
+      const envVal = document.getElementById('envSelect').value;
+      if (envFieldGid && envVal) {
+        const envOption = envEnumOptions.find(opt =>
+          opt.name && opt.name.toLowerCase() === envVal.toLowerCase()
+        );
+        if (envOption) {
+          body.data.custom_fields[envFieldGid] = envOption.gid;
+        }
+      }
 
       // Add to same project as parent
       if (parentProjectGid) body.data.projects = [parentProjectGid];
@@ -1316,6 +1350,7 @@
       document.getElementById('bugTitle').value = '';
       document.getElementById('deviceType').value = '';
       document.getElementById('osVersion').value = '';
+      document.getElementById('envSelect').selectedIndex = 0;
       document.getElementById('reproSteps').value = '';
       document.getElementById('expectedResult').value = '';
       document.getElementById('actualResult').value = '';

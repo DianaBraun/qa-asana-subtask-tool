@@ -1058,6 +1058,21 @@
           return;
         }
 
+        // Force Work type to "BugFix"
+        if (nameLower === 'work type' && f.resource_subtype === 'enum') {
+          const bugFixOption = (f.enum_options || []).find(opt =>
+            opt.name && opt.name.toLowerCase() === 'bugfix'
+          );
+          if (bugFixOption) {
+            inheritedCustomFields[f.gid] = bugFixOption.gid;
+            inheritedFieldsDisplay.push({ name: f.name, value: 'BugFix (forced)' });
+          } else {
+            inheritedFieldsDisplay.push({ name: f.name, value: displayVal || '— (BugFix option not found)' });
+            if (f.enum_value) inheritedCustomFields[f.gid] = f.enum_value.gid;
+          }
+          return;
+        }
+
         if (!displayVal) return;
 
         // Store for display
